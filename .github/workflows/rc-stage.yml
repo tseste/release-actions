@@ -32,7 +32,8 @@ jobs:
             echo "Tag ${{ inputs.tag }} already exists; skipping creation"
           fi
 
-          BASE_TAG="${{ inputs.tag%-rc}}"
+          BASE_TAG="${{ inputs.tag }}"
+          BASE_TAG="${BASE_TAG%-rc}"
           DEV_TAG="${BASE_TAG}-dev"
           if git rev-parse --verify "refs/tags/${DEV_TAG}" >/dev/null 2>&1; then
             git tag -d "${DEV_TAG}"
