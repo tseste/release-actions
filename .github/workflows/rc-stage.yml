@@ -37,7 +37,4 @@ jobs:
           echo "- Security checks pass"
 
       - name: Require production approval
-        run: |
-          echo "Promotion to production is blocked until a manager approves the release"
-          git tag -d "${{ inputs.tag }}" || true
-          git push origin --delete "${{ inputs.tag }}" || true
+        run: echo "Promotion to production is blocked until a manager approves the release"
