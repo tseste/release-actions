@@ -43,11 +43,12 @@ jobs:
 
       - name: Promote to final production tag
         run: |
+          set -euo pipefail
           RELEASE_TAG="${{ inputs.release_tag || github.event.inputs.release_tag }}"
           git fetch --tags --force
           if ! git rev-parse --verify "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
             git tag "$RELEASE_TAG"
-            git push origin "$RELEASE_TAG"
+            git push origin "refs/tags/$RELEASE_TAG"
           else
             echo "Tag $RELEASE_TAG already exists; skipping creation"
           fi
@@ -56,8 +57,8 @@ jobs:
           DEV_TAG="${RELEASE_TAG}-dev"
           for tag in "$RC_TAG" "$DEV_TAG"; do
             if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
-              git tag -d "$tag" || true
-              git push origin --delete "$tag" || true
+              git tag -d "$tag"
+              git push origin --delete "refs/tags/$tag"
             else
               echo "No $tag tag to remove"
             fi

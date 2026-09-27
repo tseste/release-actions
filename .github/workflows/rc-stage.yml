@@ -13,6 +13,8 @@ on:
 jobs:
   validate-rc:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,10 +23,11 @@ jobs:
 
       - name: Create RC tag
         run: |
+          set -euo pipefail
           git fetch --tags --force
           if ! git rev-parse --verify "refs/tags/${{ inputs.tag }}" >/dev/null 2>&1; then
             git tag "${{ inputs.tag }}"
-            git push origin "${{ inputs.tag }}"
+            git push origin "refs/tags/${{ inputs.tag }}"
           else
             echo "Tag ${{ inputs.tag }} already exists; skipping creation"
           fi
@@ -32,8 +35,8 @@ jobs:
           BASE_TAG="${{ inputs.tag%-rc}}"
           DEV_TAG="${BASE_TAG}-dev"
           if git rev-parse --verify "refs/tags/${DEV_TAG}" >/dev/null 2>&1; then
-            git tag -d "${DEV_TAG}" || true
-            git push origin --delete "${DEV_TAG}" || true
+            git tag -d "${DEV_TAG}"
+            git push origin --delete "refs/tags/${DEV_TAG}"
           else
             echo "No ${DEV_TAG} tag to remove"
           fi
