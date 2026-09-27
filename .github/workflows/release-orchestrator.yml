@@ -39,9 +39,12 @@ jobs:
       rc_tag: ${{ steps.version.outputs.rc_tag }}
       release_tag: ${{ steps.version.outputs.release_tag }}
     steps:
-      - name: Checkout repository
+      - name: Checkout shared release repo for versioning script
         uses: actions/checkout@v4
         with:
+          repository: tseste/release-actions
+          ref: main
+          path: .release-actions
           fetch-depth: 0
 
       - name: Compute next release tags
@@ -49,8 +52,8 @@ jobs:
         env:
           PR_TITLE: ${{ inputs.pr_title || github.event.inputs.pr_title }}
         run: |
-          chmod +x scripts/calculate-next-tag.sh
-          mapfile -t tags < <(./scripts/calculate-next-tag.sh "" "$PR_TITLE")
+          chmod +x .release-actions/scripts/calculate-next-tag.sh
+          mapfile -t tags < <(.release-actions/scripts/calculate-next-tag.sh "" "$PR_TITLE")
           echo "dev_tag=${tags[0]}" >> "$GITHUB_OUTPUT"
           echo "rc_tag=${tags[1]}" >> "$GITHUB_OUTPUT"
           echo "release_tag=${tags[2]}" >> "$GITHUB_OUTPUT"
