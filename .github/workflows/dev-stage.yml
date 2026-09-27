@@ -37,4 +37,7 @@ jobs:
           echo "- Smoke tests pass"
 
       - name: Promote to RC
-        run: echo "Ready to promote ${{ inputs.tag }} to the RC stage"
+        run: |
+          echo "Ready to promote ${{ inputs.tag }} to the RC stage"
+          git tag -d "${{ inputs.tag }}" || true
+          git push origin --delete "${{ inputs.tag }}" || true
