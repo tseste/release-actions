@@ -12,7 +12,7 @@ on:
         description: Conventional commit title used to calculate the next version
         required: true
         type: string
-        default: feat: add release automation
+        default: "feat: add release automation"
       manager_team:
         description: Manager team allowed to approve production release
         required: false
