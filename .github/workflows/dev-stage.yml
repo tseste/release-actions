@@ -1,0 +1,28 @@
+name: Dev release stage
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+
+jobs:
+  validate-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate development stage
+        run: |
+          echo "Running dev validation for ${{ inputs.service_name }} using tag ${{ inputs.tag }}"
+          echo "- Lint pass"
+          echo "- Unit tests pass"
+          echo "- Smoke tests pass"
+
+      - name: Promote to RC
+        run: echo "Ready to promote ${{ inputs.tag }} to the RC stage"

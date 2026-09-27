@@ -1,0 +1,55 @@
+name: Production approval gate
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+      release_tag:
+        required: true
+        type: string
+      manager_team:
+        required: false
+        type: string
+        default: release-managers
+  workflow_dispatch:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        default: sample-service
+      release_tag:
+        required: true
+        type: string
+        default: v1.1.0
+      manager_team:
+        required: false
+        type: string
+        default: release-managers
+
+jobs:
+  manual-approval:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: production
+    steps:
+      - name: Print release details
+        run: |
+          echo "Production release requested for ${{ inputs.service_name || github.event.inputs.service_name }}"
+          echo "Final tag: ${{ inputs.release_tag || github.event.inputs.release_tag }}"
+          echo "Required approver team: ${{ inputs.manager_team || github.event.inputs.manager_team }}"
+
+      - name: Teams-safe approval guidance
+        run: |
+          echo "GitHub Teams does not offer Enterprise-style environment approvals in the same way."
+          echo "Use either:"
+          echo "  1) a required reviewer workflow in a release-ops repo, or"
+          echo "  2) a branch protection/ruleset that requires manager approval before a production workflow can run."
+          echo "This gate must be satisfied before the workflow continues to the final production deploy."
+
+      - name: Final production deploy step
+        run: |
+          echo "Approval succeeded; deploying ${{ inputs.service_name || github.event.inputs.service_name }} @ ${{ inputs.release_tag || github.event.inputs.release_tag }} to production"

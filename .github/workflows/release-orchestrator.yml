@@ -1,0 +1,80 @@
+name: Release orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: Service/repo being released
+        required: true
+        type: string
+        default: sample-service
+      pr_title:
+        description: Conventional commit title used to calculate the next version
+        required: true
+        type: string
+        default: feat: add release automation
+      manager_team:
+        description: Manager team allowed to approve production release
+        required: false
+        type: string
+        default: release-managers
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+      pr_title:
+        required: true
+        type: string
+      manager_team:
+        required: false
+        type: string
+        default: release-managers
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      dev_tag: ${{ steps.version.outputs.dev_tag }}
+      rc_tag: ${{ steps.version.outputs.rc_tag }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next release tags
+        id: version
+        env:
+          PR_TITLE: ${{ inputs.pr_title || github.event.inputs.pr_title }}
+        run: |
+          chmod +x scripts/calculate-next-tag.sh
+          mapfile -t tags < <(./scripts/calculate-next-tag.sh "" "$PR_TITLE")
+          echo "dev_tag=${tags[0]}" >> "$GITHUB_OUTPUT"
+          echo "rc_tag=${tags[1]}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${tags[2]}" >> "$GITHUB_OUTPUT"
+
+  dev:
+    needs: prepare
+    uses: ./.github/workflows/dev-stage.yml
+    with:
+      service_name: ${{ inputs.service_name || github.event.inputs.service_name }}
+      tag: ${{ needs.prepare.outputs.dev_tag }}
+
+  rc:
+    needs: [prepare, dev]
+    if: ${{ needs.dev.result == 'success' }}
+    uses: ./.github/workflows/rc-stage.yml
+    with:
+      service_name: ${{ inputs.service_name || github.event.inputs.service_name }}
+      tag: ${{ needs.prepare.outputs.rc_tag }}
+
+  prod-approval:
+    needs: [prepare, rc]
+    if: ${{ needs.rc.result == 'success' }}
+    uses: ./.github/workflows/prod-approval.yml
+    with:
+      service_name: ${{ inputs.service_name || github.event.inputs.service_name }}
+      release_tag: ${{ needs.prepare.outputs.release_tag }}
+      manager_team: ${{ inputs.manager_team || github.event.inputs.manager_team }}
