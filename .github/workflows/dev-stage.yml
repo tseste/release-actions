@@ -16,6 +16,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create dev tag
+        run: |
+          git fetch --tags --force
+          if ! git rev-parse --verify "refs/tags/${{ inputs.tag }}" >/dev/null 2>&1; then
+            git tag "${{ inputs.tag }}"
+            git push origin "${{ inputs.tag }}"
+          else
+            echo "Tag ${{ inputs.tag }} already exists; skipping creation"
+          fi
 
       - name: Validate development stage
         run: |

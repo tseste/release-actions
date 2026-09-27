@@ -32,10 +32,25 @@ jobs:
   manual-approval:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     environment:
       name: production
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create final production tag
+        run: |
+          git fetch --tags --force
+          if ! git rev-parse --verify "refs/tags/${{ inputs.release_tag || github.event.inputs.release_tag }}" >/dev/null 2>&1; then
+            git tag "${{ inputs.release_tag || github.event.inputs.release_tag }}"
+            git push origin "${{ inputs.release_tag || github.event.inputs.release_tag }}"
+          else
+            echo "Tag ${{ inputs.release_tag || github.event.inputs.release_tag }} already exists; skipping creation"
+          fi
+
       - name: Print release details
         run: |
           echo "Production release requested for ${{ inputs.service_name || github.event.inputs.service_name }}"
