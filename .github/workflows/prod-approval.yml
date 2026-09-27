@@ -52,11 +52,16 @@ jobs:
             echo "Tag $RELEASE_TAG already exists; skipping creation"
           fi
 
-          # Keep a single active tag for the current release stage.
-          git tag -d "v${RELEASE_TAG#v}-rc" || true
-          git push origin --delete "v${RELEASE_TAG#v}-rc" || true
-          git tag -d "v${RELEASE_TAG#v}-dev" || true
-          git push origin --delete "v${RELEASE_TAG#v}-dev" || true
+          RC_TAG="${RELEASE_TAG}-rc"
+          DEV_TAG="${RELEASE_TAG}-dev"
+          for tag in "$RC_TAG" "$DEV_TAG"; do
+            if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
+              git tag -d "$tag" || true
+              git push origin --delete "$tag" || true
+            else
+              echo "No $tag tag to remove"
+            fi
+          done
 
       - name: Print release details
         run: |

@@ -29,6 +29,15 @@ jobs:
             echo "Tag ${{ inputs.tag }} already exists; skipping creation"
           fi
 
+          BASE_TAG="${{ inputs.tag%-rc}}"
+          DEV_TAG="${BASE_TAG}-dev"
+          if git rev-parse --verify "refs/tags/${DEV_TAG}" >/dev/null 2>&1; then
+            git tag -d "${DEV_TAG}" || true
+            git push origin --delete "${DEV_TAG}" || true
+          else
+            echo "No ${DEV_TAG} tag to remove"
+          fi
+
       - name: Validate RC stage
         run: |
           echo "Running staging validation for ${{ inputs.service_name }} using tag ${{ inputs.tag }}"
